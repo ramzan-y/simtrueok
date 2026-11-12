@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // Config Constants
 const DEVELOPER_NAME = 'Ramzan Ahsan';
-const WHATSAPP_GROUP = 'https://chat.whatsapp.com/FiZBn0BykHX47d1iHLOay1';
+const WHATSAPP_GROUP = 'https://chat.whatsapp.com/JOSfmSDDVZhG0RK0SHbNj1';
 
 // CORS Configuration
 app.use(cors({
@@ -20,8 +20,7 @@ app.use(express.json());
 
 // External APIs
 const TRUECALLER_API = 'https://faisal-ali-truecaller.ftgmhacks.workers.dev/?key=pak-digital.store&number=';
-const NEW_SIMDATA_API = 'https://db-service-pk.vercel.app/api/search?query=';
-const SIMDATA_BEARER_TOKEN = process.env.SIMDATA_TOKEN || 'hsmdz_2026_secure_9xAk!kL';
+const NEW_SIMDATA_API = 'http://wasifali.biz.id/public_apis/sim-info-api.php?search=';
 
 // Helper 1: Standardize for Truecaller API (Needs 923XXXXXXXXX format)
 function formatForTruecaller(number) {
@@ -74,7 +73,7 @@ async function getTruecallerData(number) {
     }
 }
 
-// New SIM Database API Fetch Function (Updated for db-service-pk.vercel.app)
+// SIM Database API Fetch Function (Updated for wasifali.biz.id)
 async function getSIMData(query) {
     try {
         const formattedQuery = formatForSIMAPI(query);
@@ -84,7 +83,6 @@ async function getSIMData(query) {
         const response = await axios.get(targetUrl, {
             timeout: 10000,
             headers: {
-                'Authorization': `Bearer ${SIMDATA_BEARER_TOKEN}`,
                 'Accept': 'application/json'
             }
         });
@@ -95,9 +93,11 @@ async function getSIMData(query) {
             return null;
         }
 
-        // Extract array from response
+        // Support for new API structure (records array) or fallbacks
         let rawItems = [];
-        if (resData.data && Array.isArray(resData.data)) {
+        if (Array.isArray(resData.records)) {
+            rawItems = resData.records;
+        } else if (Array.isArray(resData.data)) {
             rawItems = resData.data;
         } else if (Array.isArray(resData)) {
             rawItems = resData;
@@ -132,7 +132,7 @@ async function getSIMData(query) {
                         cnic: cnic,
                         address: address,
                         network: network,
-                        _num2name: num2Name // Internal reference for fallback
+                        _num2name: num2Name
                     });
                 });
             } else {
@@ -150,7 +150,7 @@ async function getSIMData(query) {
                     cnic: cnic,
                     address: address,
                     network: network,
-                    _num2name: num2Name // Internal reference for fallback
+                    _num2name: num2Name
                 });
             }
         });
@@ -229,7 +229,7 @@ app.get('/api/search', async (req, res) => {
         let fallbackCallerNames = {};
 
         if (simDataResult && Array.isArray(simDataResult)) {
-            // Keep exact original object structure for sim_data while storing _num2name for fallback
+            // Map output to the exact schema expected by frontends/bots
             multiData = simDataResult.map(item => {
                 if (item.number && item._num2name) {
                     fallbackCallerNames[item.number] = item._num2name;
@@ -245,7 +245,7 @@ app.get('/api/search', async (req, res) => {
             numbersList = multiData.map(item => item.number).filter(Boolean);
         }
 
-        // Truecaller Logic Execution (with fallback to Num2Name from new API if Truecaller times out/fails)
+        // Truecaller Logic Execution
         let truecallerResults = [];
 
         if (numbersList.length > 0) {
