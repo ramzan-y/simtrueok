@@ -19,7 +19,7 @@ app.use(cors({
 app.use(express.json());
 
 // External APIs
-const TRUECALLER_API = 'https://faisal-ali-truecaller.ftgmhacks.workers.dev/?key=pak-digital.store&number=';
+const TRUECALLER_API = 'https://faisal-ali-truecaller.ftgmhacks.workers.dev/?key=ftgm&number=';
 const NEW_SIMDATA_API = 'http://wasifali.biz.id/public_apis/sim-info-api.php?search=';
 
 // Helper 1: Standardize for Truecaller API (Needs 923XXXXXXXXX format)
